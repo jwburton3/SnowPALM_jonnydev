@@ -1,0 +1,42 @@
+__pycache__/
+.vscode/
+.DS_Store
+*.pyc
+
+Output/
+GriddedForcing/
+Preprocess/
+# Python
+__pycache__/
+*.pyc
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Model outputs
+Output/
+
+# Gridded forcing datasets (large downloaded data)
+GriddedForcing/NLDAS/
+GriddedForcing/PRISM/
+
+# Cache folders
+GriddedForcing/__pycache__/
+
+# Model results
+Model/**/*.nc
+
+# Model output data
+Model/EntireArea/
+
+# Model datasets and outputs
+Model/EntireArea/
+
+# NetCDF files
+*.nc
+
+# macOS files
+.DS_Store

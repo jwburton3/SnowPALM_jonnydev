@@ -1,0 +1,89 @@
+To run SnowPALM, you need python (e.g. from https://www.anaconda.com/), along with a few dependencies (see the import list at 
+the top of the files in the 'ProgramFiles' directory, but the non-standard libraries that are most likely to be required to be 
+installed are gdal, numpy, scipy, netCDF4, PIL, pyproj, which can be installed with the "conda" command)
+
+Note that prior to running the model, it is good to type in all of the import commands into a python interpreter (e.g., type
+"import osgeo.gdal,numpy,scipy,netCDF4,PIL,pyproj") to make sure that everything is installed correctly.
+
+SnowPALM also expects that the gdal utility programs are accessible on the command line.  This can be done by checking 
+"(Add Anaconda3 to my PATH environment variable)" when installing it.  Note that some of the functionality also requires 
+environment variables called "GDAL_DATA" and "PROJ_LIB".   GDAL_DATA should be set to something like 
+<MinicondaDirectory>\Library\share\gdal and PROJ_LIB should be set to something like <MinicondaDirectory>\Library\share\projs.
+These should be added to the path automatically by using the "Add to Path" checkbox when installing python, but you may have to 
+do some verification.
+
+All of the steps required to run the model are accomplished using the python files in this directory (the run files).  Here, they
+are already set up to run this demo.  At first, it is recommended to run these commands as is to get a feel for what is going on
+and then modifying as necessary to set up new model domains
+
+Step 1: Extract spatial data from the raw data files for the model domain
+
+Command: python GetSpatialData.py
+  
+In addition to extracting DTM, cover, and veght maps from the input data files (in Preprocess/GIS), it also creates a map of 
+LAI (in Preprocess/Indexes).  Output files are saved in Preprocess/GIS (extracted dtm, cover, and veght maps) and Preprocess/Indexes (lai map).
+Note that unless specified, this script only creates files that are not present.
+
+Step 2: Create skyview and potential solar forcing index (SFI) maps
+
+Command: python ComputeRadiationIndexes.py
+
+This script creates a single skyview factor map but potential solar index maps for every month.  All maps are created using
+SAGA GIS algorithms, though they are created separately for different classes of canopy cover (so shadows / skyview from
+sparse vegetation can be treated differently from those from dense vegetation).  The SAGA created maps are saved in 
+Preprocess/GIS and the final Skyview and SFI maps are saved in Preprocess/Indexes.
+Note that unless specified, this script only creates files that are not present.
+
+Step 3: Extract forcing data to the model domain 
+
+Commands: python GetForcingData.py DailyNLDASData 2018 10 2019 5
+	      python GetForcingData.py HourlyNLDASData 2018 10 2019 5
+          python GetForcingData.py DailyStationData 2018 10 2019 5
+
+Forcing data can either come from NLDAS/PRISM and/or from a prescribed forcing data
+file.  There are options to use daily or hourly forcing data, different variables can come from different sources, and lapse
+rates can be applied.  Files are saved in Preprocess/Forcing
+Note that this script always recreates files specified
+
+    To use the PRISM/NLDAS data, these data have to be downloaded first, which can be done by double clicking 
+    GriddedForcing/DownloadForcingData.bat.  It is recommended to have the GriddedForcing in a place that can be used for multiple 
+    SnowPALM domains
+
+    SnowPALM's forcing data can also be exported for a point.  This is useful for extracting the NLDAS/PRISM data for a particular location
+    to merge with existing (but maybe incomplete) station forcing data.  Note that this creates a csv file in Output\Forcing_csv
+	
+	Command: python OutputForcingData.py 10/1/2018 5/31/2019 Snotel 33.9212 -109.4587 DailyNLDASData
+
+
+Step 4: Create wind index maps for the model domain
+
+Command: python ComputeWindIndexes.py
+
+Wind index maps are created for each day with non zero precipitation below a certain temperature threshold.  Different maps are created 
+based on different daily wind directions (though the wind direction for all maps can also be forced to be consistent as well.  Files are
+saved in Preprocess/Indexes (though files that are direct outputs from GIS algorithms are also saved in Preprocess/GIS
+Note that unless specified, this scrip only (re)creates files that are not present
+
+Step 5: Run SnowPALM 
+
+Commands: python RunModel.py EntireArea
+		  python RunModel.py SnowtographyArea
+		  python RunModel.py POIs
+		  python RunModel.py POIs_HourlyNLDAS
+
+Will first create a 2d model structure (spatial dimension and time dimension) for each tile.  This structure will then be populated with
+extractd forcing data and indexes (from the preprocessors).  Note that this step only needs to be completed once, and makes subsequent
+model runs much faster (though there are flags to reprocess the preprocessed data if necissary.  The model can either be run for the entire
+model domain (whole extent of preprocessed files), a subset of this area, or for a series of points (defined in the shapefiles in the POIs 
+Directory).  For spatial domains, the model runs on individual tiles in paralell.  Temporal output is automatically generated when running 
+in point mode (saved to Output/POIs).  Spatial output needs to be output with OutputGriddedData.py
+
+Step 6: Output Gridded Model Data
+
+Commands: python OutputGriddedData.py EntireArea 3/4/2019 3/4/2019 swe,depth
+	      python OutputGriddedData.py SnowtographyArea 3/4/2019 3/4/2019 swe,depth
+
+Aggregates together the individual model tiles and creates GIS data files.  You need to specify the domain, date range, 
+and output variables to extract.
+
+

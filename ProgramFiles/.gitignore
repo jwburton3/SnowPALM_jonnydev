@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Temp files
+~$*
+*.tmp
+
+# OS
+.DS_Store
+
+# Large data (uncomment if needed)
+# GriddedForcing/
+# InputData/
+# Output/
